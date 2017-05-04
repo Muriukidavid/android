@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">BLE Toolbox</string>
+    <string name="ble_not_supported">BLE is not supported on this device</string>
+    <string name="ble_supported">BLE is supported on this device</string>
+</resources>
