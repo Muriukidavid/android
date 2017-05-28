@@ -34,85 +34,103 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+import static co.karibe.testui.R.id.toolbar;
 
+public class MainActivity extends AppCompatActivity {
+    private Toolbar mToolbar;
     private BluetoothAdapter mBluetoothAdapter;
     private final static int REQUEST_ENABLE_BT = 1;
     private Handler mHandler;
-    private Handler cHandler;
     private static final long SCAN_PERIOD = 5000;
     private BluetoothLeScanner mLEScanner;
-    private ScanSettings settings;
-    private List<ScanFilter> filters;
+    private ScanSettings mSettings;
+    private List<ScanFilter> mFilters;
     private BluetoothGatt mGatt;
-    private List<BluetoothGattService> services;
-    private ArrayList<ArrayList<String>> items = new ArrayList<ArrayList<String>>();
-    private ListView listView;
+    private List<BluetoothGattService> mServices;
+    private ArrayList<ArrayList<String>> mItems = new ArrayList<ArrayList<String>>();
+    private ListView mListView;
     private ScanResult result;
-    private BluetoothDevice device;
-    private MenuItem itm;
-    private int mBattLevel;
-    private int scancount;
+    private BluetoothDevice mDevice;
+    private MenuItem mMenuItem;
+    private int mBatteryLevel;
+    private int scanCount;
+    //whether to log debug messages
+    private final static boolean debug = false;
 
+    //Gap service UUID
     private static final UUID GenAccess_Service_UUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
-    private static final UUID Battery_Service_UUID = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
-    private static final UUID Battery_Level_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
-    private static final UUID HeartRate_Service_UUID = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
-    private static final UUID Heart_rate_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
-    private static final UUID DeviceInfo_Service_UUID = UUID.fromString("0000180A-0000-1000-8000-00805f9b34fb");
-    private static final UUID DeviceManufacturer_UUID = UUID.fromString("00002a29-0000-1000-8000-00805f9b34fb");
-    private static final UUID DeviceName_UUID = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
-    private static final UUID BPS_Service_UUID = UUID.fromString("00001810-0000-1000-8000-00805f9b34fb");
-    private static final UUID Bps_UUID = UUID.fromString("00002a35-0000-1000-8000-00805f9b34fb");
-    //Client Characteristic Configuration Descriptor declaration UUID
-    private static final UUID DescriptorConfig_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
-    //Server Characteristic Configuration Descriptor declaration UUID
-    private static final UUID ServerDescriptorConfig_UUID = UUID.fromString("00002903-0000-1000-8000-00805f9b34fb");
-    //Blood Pressure feature UUID 0x2A49
-    private static final UUID BloodPressureFeature_UUID = UUID.fromString("00002A49-0000-1000-8000-00805f9b34fb");
-    //Intermediate Cuff Pressure UUID
-    private static final UUID IntermediatePressure_UUID = UUID.fromString("00002A36-0000-1000-8000-00805f9b34fb");
     //Gatt Service UUID
     private static final UUID GattService_UUID = UUID.fromString("00001801-0000-1000-8000-00805f9b34fb");
+    //Client Characteristic Configuration Descriptor declaration UUID
+    //for configuring a characteristic for one client on one server
+    private static final UUID DescriptorConfig_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
+    //Server Characteristic Configuration Descriptor declaration UUID
+    //for changing a characteristic for many clients on one server
+    private static final UUID ServerDescriptorConfig_UUID = UUID.fromString("00002903-0000-1000-8000-00805f9b34fb");
+    //Battery service UUID
+    private static final UUID Battery_Service_UUID = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
+    //Battery level characteristic UUID
+    private static final UUID Battery_Level_UUID = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
+    //Heart rate service UUID
+    private static final UUID HeartRate_Service_UUID = UUID.fromString("0000180D-0000-1000-8000-00805f9b34fb");
+    //Heart rate characteristic UUID
+    private static final UUID Heart_rate_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
+    //Device information service UUID
+    private static final UUID DeviceInfo_Service_UUID = UUID.fromString("0000180A-0000-1000-8000-00805f9b34fb");
+    //Device manufacturer characteristic UUID
+    private static final UUID DeviceManufacturer_UUID = UUID.fromString("00002a29-0000-1000-8000-00805f9b34fb");
+    //Device name characteristic UUID
+    private static final UUID DeviceName_UUID = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
+    //Blood pressure service UUID
+    private static final UUID BPS_Service_UUID = UUID.fromString("00001810-0000-1000-8000-00805f9b34fb");
+    //Blood pressure characteristic UUID
+    private static final UUID Bps_UUID = UUID.fromString("00002a35-0000-1000-8000-00805f9b34fb");
+    //Blood pressure feature characteristic UUID 0x2A49
+    private static final UUID BloodPressureFeature_UUID = UUID.fromString("00002A49-0000-1000-8000-00805f9b34fb");
+    //Intermediate cuff pressure characteristic UUID
+    private static final UUID IntermediatePressure_UUID = UUID.fromString("00002A36-0000-1000-8000-00805f9b34fb");
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         //activate our Toolbar
-        Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        mToolbar = (Toolbar)findViewById(toolbar);
+        mToolbar.setTitle("Kinetis BLE Toolbox");
+        setSupportActionBar(mToolbar);
         //initialize some objects
-
-        scancount = 0;
-        device = null;
-        mHandler = new Handler();//handler for the BLE scan thread
-        cHandler = new Handler();//handler for characteristics reading
-        listView = (ListView) findViewById(R.id.orodha);
-        CustomAdapter cus = new CustomAdapter(this,items);
-        listView.setAdapter(cus);
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+        scanCount = 0;
+        mDevice = null;
+        //handler for the BLE scan thread
+        mHandler = new Handler();
+        mListView = (ListView) findViewById(R.id.orodha);
+        CustomAdapter cus = new CustomAdapter(this, mItems);
+        mListView.setAdapter(cus);
+        mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id){
-                Toast.makeText(MainActivity.this, "You Clicked at ".concat(Integer.toString(position)),
-                        Toast.LENGTH_SHORT).show();
-                //refresh the view
+                if(debug) {
+                    Toast.makeText(MainActivity.this, "You Clicked at ".concat(Integer.toString(position)),
+                           Toast.LENGTH_SHORT).show();
+                }
+                //Connect to selected device
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //items.clear();
-                        connectToDevice(device);
+                        connectToDevice(mDevice);
                     }
                 });
             }
         });
-
+        mListView.setVisibility(View.VISIBLE);
+        //enable bluetooth
         if (!getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
             Toast.makeText(MainActivity.this,
                     R.string.ble_not_supported, Toast.LENGTH_SHORT).show();
@@ -127,26 +145,27 @@ public class MainActivity extends AppCompatActivity {
             }
             if (Build.VERSION.SDK_INT >= 21) {
                 mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
-                settings = new ScanSettings.Builder()
+                mSettings = new ScanSettings.Builder()
                         .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
                         .build();
-                filters = new ArrayList<>();//ScanFilter
+                mFilters = new ArrayList<>();//ScanFilter
             }
         }
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflate the menu; this adds mItems to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu, menu);
-        itm = menu.findItem(R.id.mActions);
-        itm.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+        mMenuItem = menu.findItem(R.id.mActions);
+        mMenuItem.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
-                Log.d("mActionstitle",item.getTitle().toString());
+                if (debug) {
+                    Log.d("mActionstitle",item.getTitle().toString());
+                }
                 if (item.getTitle().toString().equalsIgnoreCase("SCAN")) {
                     scanLeDevice(true);
-                    //Log.d("Scan", "Try to initiate scan");
                     item.setTitle("Stop");
                 }else if(item.getTitle().toString().equalsIgnoreCase("STOP")){
                     scanLeDevice(false);
@@ -158,14 +177,18 @@ public class MainActivity extends AppCompatActivity {
                     TextView txt = (TextView)findViewById(R.id.batt_level);
                     txt.setText("---");
                 }else if(item.getTitle().toString().equalsIgnoreCase("CONNECT")){
-                    //TODO: implement reconnecting to same device
-                    device=mBluetoothAdapter.getRemoteDevice(result.getDevice().getAddress());
-                    if(!(device==null)) {
-                        Log.d("mActions","CONNECT>>device: ".concat(device.getName()).concat(", ").concat(device.getAddress()));
+                    //TODO: implement reconnecting to same mDevice
+                    mDevice =mBluetoothAdapter.getRemoteDevice(result.getDevice().getAddress());
+                    if(!(mDevice ==null)) {
+                        if(debug) {
+                            Log.d("mActions", "CONNECT>>mDevice: ".concat(mDevice.getName()).concat(", ").concat(mDevice.getAddress()));
+                        }
                         mGatt=null;
-                        connectToDevice(device);
+                        connectToDevice(mDevice);
                     }else{
-                        Log.w("CONNECT","No device available");
+                        if (debug) {
+                            Log.w("CONNECT", "No mDevice available");
+                        }
                         item.setTitle("SCAN");
                     }
                 }
@@ -184,10 +207,10 @@ public class MainActivity extends AppCompatActivity {
         }
         if (Build.VERSION.SDK_INT >= 21) {
             mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
-            settings = new ScanSettings.Builder()
+            mSettings = new ScanSettings.Builder()
                     .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
-            filters = new ArrayList<ScanFilter>();
+            mFilters = new ArrayList<ScanFilter>();
         }
     }
 
@@ -230,9 +253,11 @@ public class MainActivity extends AppCompatActivity {
                     mLEScanner.stopScan(mScanCallback);
                 }
             }, SCAN_PERIOD);
-            mLEScanner.startScan(filters, settings, mScanCallback);
-            scancount++;
-            Log.i("scancount",Integer.toString(scancount));
+            mLEScanner.startScan(mFilters, mSettings, mScanCallback);
+            scanCount++;
+            if (debug) {
+                Log.i("scanCount", Integer.toString(scanCount));
+            }
 
         } else {
             mLEScanner.stopScan(mScanCallback);
@@ -244,21 +269,20 @@ public class MainActivity extends AppCompatActivity {
         public void onScanResult(int callbackType, ScanResult res) {
             result = res;
             BluetoothDevice btDevice = result.getDevice();
-            device=btDevice;
+            mDevice =btDevice;
             String s = btDevice.getName();
             String s2 = btDevice.getAddress();
             ArrayList<String> row = new ArrayList<String>();
             row.add(0,s);
             row.add(1,s2);
-            //items.clear();
-            if (!items.contains(row)) {
-                items.add(row);
+            if (!mItems.contains(row)) {
+                mItems.add(row);
             }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    itm.setTitle("Scan");
-                    ((BaseAdapter) listView.getAdapter()).notifyDataSetChanged();
+                    mMenuItem.setTitle("Scan");
+                    ((BaseAdapter) mListView.getAdapter()).notifyDataSetChanged();
                 }
             });
         }
@@ -272,69 +296,92 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onScanFailed(int errorCode) {
-            Log.d("Scan Failed", "Error Code: " + errorCode);
+            if (debug) {
+                Log.d("Scan Failed", "Error Code: " + errorCode);
+            }
         }
     };
 
     public void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
             mGatt = device.connectGatt(this, false, gattCallback);
-            scanLeDevice(false);// will stop after first device detection
+            scanLeDevice(false);// will stop after first mDevice detection
         }else{
-            Log.d("connectToDevice","mGatt not NULL");
+            if (debug) {
+                Log.d("connectToDevice", "mGatt not NULL");
+            }
         }
     }
     private final BluetoothGattCallback gattCallback = new BluetoothGattCallback() {
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-            Log.i("onConnectionStateChange", "Status: " + status);
+            if (debug) {
+                Log.i("onConnectionStateChange", "Status: " + status);
+            }
             switch (newState) {
                 case BluetoothProfile.STATE_CONNECTED:
-                    Log.d("gattCallback", "STATE_CONNECTED");
+                    if (debug) {
+                        Log.d("gattCallback", "STATE_CONNECTED");
+                    }
                     mGatt.discoverServices();
                     break;
                 case BluetoothProfile.STATE_DISCONNECTED:
-                    Log.d("gattCallback", "STATE_DISCONNECTED");
+                    if (debug){
+                        Log.d("gattCallback", "STATE_DISCONNECTED");
+                    }
                     break;
                 default:
-                    Log.d("gattCallback", "STATE_OTHER");
+                    if (debug){
+                        Log.d("gattCallback", "STATE_OTHER");
+                    }
                 break;
             }
 
         }
         @Override
         public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
-            services = gatt.getServices();
-            /*
+            mServices = gatt.getServices();
+
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
                     BluetoothGattService DevInfoService = gatt.getService(DeviceInfo_Service_UUID);
                     if(DevInfoService==null){
-                        Log.d("onServicesDiscovered","Device Information Service not available");
+                        if (debug){
+                            Log.d("onServicesDiscovered","Device Information Service not available");
+                        }
                     }else{
-                        BluetoothGattCharacteristic DeviceManu = DevInfoService.getCharacteristic(DeviceManufacturer_UUID);
-                        if(DeviceManu==null){
-                            Log.d("onServicesDiscovered","Device Manufacturer not available");
+                        BluetoothGattCharacteristic DeviceManufacturer = DevInfoService.getCharacteristic(DeviceManufacturer_UUID);
+                        if(DeviceManufacturer==null){
+                            if (debug){
+                                Log.d("onServicesDiscovered","Device Manufacturer not available");
+                            }
                         }else{
-                            Log.d("onServicesDiscovered","Device Manufacturer read: "+gatt.readCharacteristic(DeviceManu));
+                            if (debug){
+                                Log.d("onServicesDiscovered","Device Manufacturer read: "+gatt.readCharacteristic(DeviceManufacturer));
+                            }
                         }
                     }
                 }
-            }, 2000);
-
+            }, 1000);
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
                     BluetoothGattService GenAccService = gatt.getService(GenAccess_Service_UUID);
                     if(GenAccService==null){
-                        Log.d("onServicesDiscovered","Generic Access Service not available");
+                        if (debug){
+                            Log.d("onServicesDiscovered","Generic Access Service not available");
+                        }
                     }else{
                         BluetoothGattCharacteristic DeviceName = GenAccService.getCharacteristic(DeviceName_UUID);
                         if(DeviceName==null){
-                            Log.d("onServicesDiscovered","Device Name not available");
+                            if (debug){
+                                Log.d("onServicesDiscovered","Device Name not available");
+                            }
                         }else{
-                            Log.d("onServicesDiscovered","Device Name read: "+gatt.readCharacteristic(DeviceName));
+                            if (debug){
+                                Log.d("onServicesDiscovered","Device Name read: "+gatt.readCharacteristic(DeviceName));
+                            }
                         }
                     }
                 }
@@ -344,28 +391,37 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                     BluetoothGattService HeartRateService = gatt.getService(HeartRate_Service_UUID);
                     if(HeartRateService==null){
-                        Log.d("onServicesDiscovered","Heart rate Service not available");
+                        if (debug){
+                            Log.d("onServicesDiscovered","Heart rate Service not available");
+                        }
                     }else{
                         BluetoothGattCharacteristic HeartRate = HeartRateService.getCharacteristic(Heart_rate_UUID);
                         if (HeartRate==null){
-                            Log.d("onServicesDiscovered","Heart rate  not available");
+                            if (debug){
+                                Log.d("onServicesDiscovered","Heart rate  not available");
+                            }
                         }else{
-                            Log.d("onServicesDiscovered","Heart rate read: "+gatt.readCharacteristic(HeartRate));
+                            if (debug){
+                                Log.d("onServicesDiscovered","Heart rate read: "+gatt.readCharacteristic(HeartRate));
+                            }
                         }
                     }
                 }
-            }, 1000);
-            */
+            }, 3000);
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
                     BluetoothGattService Battservice = gatt.getService(Battery_Service_UUID);
                     if(Battservice==null){
-                        Log.d("onServicesDiscovered","Battery Service not available");
+                        if (debug){
+                            Log.d("onServicesDiscovered","Battery Service not available");
+                        }
                     }else{
                         BluetoothGattCharacteristic BattLevel = Battservice.getCharacteristic(Battery_Level_UUID);
                         if (BattLevel==null){
-                            Log.d("onServicesDiscovered","Battery Level not available");
+                            if (debug){
+                                Log.d("onServicesDiscovered","Battery Level not available");
+                            }
                         }else{
                             //enable Battery level notification locally
                             gatt.setCharacteristicNotification(BattLevel,true);
@@ -373,30 +429,50 @@ public class MainActivity extends AppCompatActivity {
                             BluetoothGattDescriptor batteryDescriptor = BattLevel.getDescriptor(DescriptorConfig_UUID);
                             batteryDescriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                             gatt.writeDescriptor(batteryDescriptor);
-                            Log.d("onServicesDiscovered","enabled battery notification");
+                            if (debug){
+                                Log.d("onServicesDiscovered","enabled battery notification");
+                            }
                         }
                     }
                 }
-            }, 1000);
-
+            }, 4000);
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
                     BluetoothGattService BloodPressureService = gatt.getService(BPS_Service_UUID);
                     if(BloodPressureService==null){
-                        Log.d("onServicesDiscovered","Blood pressure Service not available");
+                        if (debug){
+                            Log.d("onServicesDiscovered","Blood pressure Service not available");
+                        }
                     }else{
-                        //read BP feature
-                        //BluetoothGattCharacteristic BPFeature = BloodPressureService.getCharacteristic(BloodPressureFeature_UUID);
-                        //if(BPFeature==null){
-                        //    Log.d("onServicesDiscovered","BPFeature is not available");
-                        //}else{
-                        //    gatt.readCharacteristic(BPFeature);
-                        //    Log.d("onServicesDiscovered","Reading BPFeature characteristic");
-                        //}
+                        BluetoothGattCharacteristic BPFeature = BloodPressureService.getCharacteristic(BloodPressureFeature_UUID);
+                        if(BPFeature==null){
+                            if (debug){
+                                Log.d("onServicesDiscovered","BPFeature is not available");
+                            }
+                        }else{
+                            gatt.readCharacteristic(BPFeature);
+                            if (debug){
+                                Log.d("onServicesDiscovered","Reading BPFeature characteristic");
+                            }
+                        }
+                    }
+                }
+            }, 5000);
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    BluetoothGattService BloodPressureService = gatt.getService(BPS_Service_UUID);
+                    if(BloodPressureService==null){
+                        if (debug){
+                            Log.d("onServicesDiscovered","Blood pressure Service not available");
+                        }
+                    }else{
                         BluetoothGattCharacteristic intermediatePressure = BloodPressureService.getCharacteristic(IntermediatePressure_UUID);
                         if (intermediatePressure==null){
-                            Log.d("onServicesDiscovered","Blood pressure intermediate not available");
+                            if (debug){
+                                Log.d("onServicesDiscovered","Blood pressure intermediate not available");
+                            }
                         }else{
                             //enable Pressure value notification locally
                             gatt.setCharacteristicNotification(intermediatePressure,true);
@@ -404,142 +480,200 @@ public class MainActivity extends AppCompatActivity {
                             BluetoothGattDescriptor descriptor = intermediatePressure.getDescriptor(DescriptorConfig_UUID);
                             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
                             gatt.writeDescriptor(descriptor);
-                            Log.d("onServicesDiscovered","enabled pressure notification");
+                            if (debug){
+                                Log.d("onServicesDiscovered","enabled intermediate blood pressure notification");
+                            }
                         }
                     }
                 }
-            }, 2000);
+            }, 6000);
             new Timer().schedule(new TimerTask() {
                 @Override
                 public void run() {
                     BluetoothGattService BloodPressureService = gatt.getService(BPS_Service_UUID);
-                    BluetoothGattCharacteristic pressure = BloodPressureService.getCharacteristic(Bps_UUID);
-                    if(pressure==null){
-                        Log.d("onServicesDiscovered","No Blood Pressure Measurements");
-                    }else{
-                        gatt.setCharacteristicNotification(pressure,true);
-                        BluetoothGattDescriptor descriptor = pressure.getDescriptor(DescriptorConfig_UUID);
-                        descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
-                        gatt.writeDescriptor(descriptor);
-                        Log.d("onServicesDiscovered","Enabled BP measurement notification");
+                    if (BloodPressureService == null) {
+                        if (debug) {
+                            Log.d("onServicesDiscovered", "Blood pressure service not available");
+                        }
+                    } else {
+                        BluetoothGattCharacteristic pressure = BloodPressureService.getCharacteristic(Bps_UUID);
+                        if (pressure == null) {
+                            if (debug) {
+                                Log.d("onServicesDiscovered", "No Blood Pressure Measurements");
+                            }
+                        } else {
+                            gatt.setCharacteristicNotification(pressure, true);
+                            BluetoothGattDescriptor descriptor = pressure.getDescriptor(DescriptorConfig_UUID);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_INDICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+                            if (debug) {
+                                Log.d("onServicesDiscovered", "Enabled BP measurement notification");
+                            }
+                        }
                     }
                 }
-            },3000);
+            },7000);
 
-            items.clear();
+            mItems.clear();
             int i=0;
-            for(BluetoothGattService service: services) {
+            for(BluetoothGattService service: mServices) {
                 if (service.getUuid().equals(Battery_Service_UUID)) {
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, "Battery Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 } else if (service.getUuid().equals(HeartRate_Service_UUID)){
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, "Heart Rate Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 } else if (service.getUuid().equals(DeviceInfo_Service_UUID)) {
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, " Device Info Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 }else if (service.getUuid().equals(GenAccess_Service_UUID)) {
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, "Generic Access Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 }else if(service.getUuid().equals(BPS_Service_UUID)){
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, "Blood Pressure Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 }else if(service.getUuid().equals(GattService_UUID)){
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, "Gatt Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 }else {
                     ArrayList<String> it = new ArrayList<String>();
                     it.add(0, " Other Service");
                     it.add(1, service.getUuid().toString());
-                    items.add(i, it);
+                    mItems.add(i, it);
                     i++;
                 }
             }
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    ((BaseAdapter)listView.getAdapter()).notifyDataSetChanged();
-                    listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                    ((BaseAdapter) mListView.getAdapter()).notifyDataSetChanged();
+                    mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            BluetoothGattCharacteristic xtic = services.get(position).getCharacteristics().get(0);
-                            Log.i("Characteristics",xtic.getUuid().toString());
+                            BluetoothGattCharacteristic xtic = mServices.get(position).getCharacteristics().get(0);
+                            if (debug){
+                                Log.i("Characteristics",xtic.getUuid().toString());
+                            }
                             if(xtic.getUuid().toString().equalsIgnoreCase(DeviceName_UUID.toString())){
-                                Log.d("onServicesDiscovered","Device name read: "+gatt.readCharacteristic(xtic));
+                                if (debug){
+                                    Log.d("onServicesDiscovered","Device name read: "+gatt.readCharacteristic(xtic));
+                                }
                             }
                             if(xtic.getUuid().toString().equalsIgnoreCase(DeviceManufacturer_UUID.toString())){
-                                Log.d("onServicesDiscovered","Device Manufacturer read: "+gatt.readCharacteristic(xtic));
+                                if (debug){
+                                    Log.d("onServicesDiscovered","Device Manufacturer read: "+gatt.readCharacteristic(xtic));
+                                }
                             }
                             if(xtic.getUuid().toString().equalsIgnoreCase(Heart_rate_UUID.toString())){
-                                Log.d("onServicesDiscovered","Heart rate read: "+gatt.readCharacteristic(xtic));
+                                if (debug){
+                                    Log.d("onServicesDiscovered","Heart rate read: "+gatt.readCharacteristic(xtic));
+                                }
                             }
                             if(xtic.getUuid().toString().equalsIgnoreCase(Battery_Level_UUID.toString())){
-                                Log.d("onServicesDiscovered","Battery level read: "+gatt.readCharacteristic(xtic));
+                                if (debug){
+                                    Log.d("onServicesDiscovered","Battery level read: "+gatt.readCharacteristic(xtic));
+                                }
                             }
                             if(xtic.getUuid().toString().equalsIgnoreCase(Bps_UUID.toString())){
-                                Log.d("onServicesDiscovered","Blood pressure read: "+gatt.readCharacteristic(xtic));
+                                if (debug){
+                                    Log.d("onServicesDiscovered","Blood pressure read: "+gatt.readCharacteristic(xtic));
+                                }
                             }
                         }
                     });
-                    itm.setTitle("DISCONNECT");
+                    mMenuItem.setTitle("DISCONNECT");
                 }
             });
         }
+
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic
                                                  characteristic, int status) {
             if(status==BluetoothGatt.GATT_SUCCESS) {
-                //010110 => BP features read result
-                //Body mov't detection not supported
-                //Cuff fit detection is supported
-                //Irregular Pulse detection is not supported
-                //Pulse rate range detection is supported
-                //Measurement position detection is supported
-                //Multiple bond support not supported
                 if(characteristic.getUuid().equals(BloodPressureFeature_UUID)){
-                    Log.d("onCharacteristicRead","BPFeature -> "+characteristic.getValue());
+                    //010110 => BP features read result
+                    //Body mov't detection not supported
+                    //Cuff fit detection is supported
+                    //Irregular Pulse detection is not supported
+                    //Pulse rate range detection is supported
+                    //Measurement position detection is supported
+                    //Multiple bond support not supported
+                    int flags = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
+                    if (debug){
+                        String[] flagsStr = {
+                                "body movement detection",
+                                "cuff fit detection",
+                                "irregular pulse detection",
+                                "pulse rate range detection",
+                                "measurement position",
+                                "multiple bond support"
+                        };
+                        for(int i=0;i<6;i++){
+                            String notstr = ((flags>>i)&1)==1?" supports ":" does not support ";
+                            Log.d("onCharacteristicRead","Blood Pressure Sensor"+notstr+flagsStr[i]);
+                        }
+                    }
                 }
                 //Battery level manual read
                 else if (characteristic.getUuid().toString().equalsIgnoreCase(Battery_Level_UUID.toString())) {
                     int level = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                    mBattLevel = level;
-                    Log.d("onCharacteristicRead", "Battery level: " +level+"%");
+                    mBatteryLevel = level;
+                    if (debug){
+                        Log.d("onCharacteristicRead", "Battery level: " +level+"%");
+                    }
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
                             TextView txt = (TextView)findViewById(R.id.batt_level);
-                            txt.setText(Integer.toString(mBattLevel).concat("%"));
+                            txt.setText(Integer.toString(mBatteryLevel).concat("%"));
                         }
                     });
                 }
-                //device manufacturer manual read
+                //mDevice manufacturer manual read
                 else if(characteristic.getUuid().toString().equalsIgnoreCase(DeviceManufacturer_UUID.toString())){
-                    Log.d("onCharacteristicRead", "Device Manufacturer: " + characteristic.getStringValue(0));
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Manufacturer: " + characteristic.getStringValue(0));
+                    }
                 }else if(characteristic.getUuid().toString().equalsIgnoreCase(Heart_rate_UUID.toString())){
-                    Log.d("onCharacteristicRead", "Heart Rate: " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0)+"Bpm");
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Heart Rate: " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0)+"Bpm");
+                    }
                 }else if (characteristic.getUuid().toString().equalsIgnoreCase(DeviceName_UUID.toString())){
-                    Log.d("onCharacteristicRead", "Device Name: " + characteristic.getStringValue(0));
+                    final String deviceName = characteristic.getStringValue(0);
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toolbar myToolbar = (Toolbar)findViewById(toolbar);
+                            myToolbar.setTitle(deviceName);
+                            setSupportActionBar(myToolbar);
+                        }
+                    });
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Name: " + deviceName);
+                    }
                 }else if(characteristic.getUuid().equals(Bps_UUID)){
-                    Log.d("onCharacteristicRead", "Blood Pressure: " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0));
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Blood Pressure: " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0));
+                    }
                 }
             }
         }
@@ -547,21 +681,89 @@ public class MainActivity extends AppCompatActivity {
         public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
             if(characteristic.getUuid().equals(Battery_Level_UUID)) {
                 int level = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                mBattLevel = level;
+                mBatteryLevel = level;
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         TextView txt = (TextView) findViewById(R.id.batt_level);
-                        txt.setText(Integer.toString(mBattLevel).concat("%"));
+                        txt.setText(Integer.toString(mBatteryLevel).concat("%"));
                     }
                 });
-                Log.d("onCharacteristicChanged","Battery level = "+Integer.toString(mBattLevel));
+                if (debug) {
+                    Log.d("onCharacteristicChanged","Battery level = "+Integer.toString(mBatteryLevel));
+                }
             }else if(characteristic.getUuid().equals(IntermediatePressure_UUID)){
-                int pressure = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
-                Log.d("onCharacteristicChanged","Intermediate pressure value = "+Integer.toString(pressure));
+                float pressure = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_SFLOAT,0);
+                if (debug) {
+                    Log.d("onCharacteristicChanged","Intermediate pressure value = "+Float.toString(pressure));
+                }
             }else if(characteristic.getUuid().equals(Bps_UUID)){
-                int bp = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
-                Log.d("onCharacteristicChanged","bp measurement = "+Integer.toString(bp));
+                /*! Blood Pressure Service - Measurement
+                    typedef struct bpsMeasurement_tag
+                    {
+                        bpsUnits_t                  unit; //1 bit in 1st byte => charValue[0] = ((pMeasurement->unit)?gBps_UnitInkPa_c:gBps_UnitInMmHg_c);
+                        bool_t                      timeStampPresent; //1 bit in 1st byte => charValue[0] |= gBps_TimeStampPresent_c;
+                        bool_t                      pulseRatePresent; //1 bit in 1st byte
+                        bool_t                      userIdPresent; //1 bit in 1st byte
+                        bool_t                      measurementStatusPresent; //1 bit in 1st byte
+                        ieee11073_16BitFloat_t      systolicValue; //2 bytes
+                        ieee11073_16BitFloat_t      diastolicValue; //2 bytes
+                        ieee11073_16BitFloat_t      meanArterialPressure; //2 bytes
+                        ctsDateTime_t               timeStamp; //7 bytes may not be present
+                        ieee11073_16BitFloat_t      pulseRate; //2 bytes
+                        uint8_t                     userId; //1 byte
+                        bpsMeasureStatusFlags_t     measurementStatus; //2 bytes
+                    }bpsMeasurement_t;
+                */
+                int flags = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
+                int units = flags&1;
+                String bpUnits = (units==1)?"Kpa":"mmHg";
+                int timeStampPresent = flags>>1&0x1;
+                int pulseRatePresent = flags>>2&0x1;
+                int userIdPresent  = flags>>3&0x1;
+                int measurementStatusPresent = flags>>4&0x1;
+                final float systolicValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_SFLOAT,1);
+                final float diastolicValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_SFLOAT,3);
+                final float meanAPValue = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_SFLOAT,5);
+                final int year = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,7);
+                int month = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,9);
+                int day = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,10);
+                final String monthstr=(month<10)?("0"+month):(""+month);
+                final String daystr=(day<10)?("0"+day):(""+day);
+                final int hour = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,11);
+                int minute = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,12);
+                int sec = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,13);
+                final String minutestr = (minute<10)?"0"+minute:Integer.toString(minute);
+                final String secondstr = (sec<10)?"0"+sec:""+sec;
+                final float heartRate = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_SFLOAT,14);
+                int userid = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,16);
+                int measurementFlags = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,17);
+                //update UI
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView systolic = (TextView)findViewById(R.id.systolic);
+                        TextView diastolic = (TextView)findViewById(R.id.diastolic);
+                        TextView meanAP = (TextView)findViewById(R.id.meanap);
+                        TextView heartrate = (TextView)findViewById(R.id.heartrate);
+                        TextView datetime = (TextView)findViewById(R.id.datetime);
+                        systolic.setText(Float.toString(systolicValue));
+                        diastolic.setText(Float.toString(diastolicValue));
+                        meanAP.setText(Float.toString(meanAPValue));
+                        heartrate.setText(Float.toString(heartRate));
+                        datetime.setText(daystr+"/"+monthstr+"/"+Integer.toString(year)+" "+Integer.toString(hour)+":"+minutestr+":"+secondstr);
+                    }
+                });
+                if (debug) {
+                    //log the values
+                    Log.d("onCharacteristicChanged", "Flags: units -> " + units + ", timeStampPresent-> " + timeStampPresent + ", pulseRatePresent-> " + pulseRatePresent + ", userIdPresent-> " + userIdPresent + ", measurementStatusPresent-> " + measurementStatusPresent);
+                    Log.d("onCharacteristicChanged", "systolic -> " + systolicValue + bpUnits);
+                    Log.d("onCharacteristicChanged", "diastolic -> " + diastolicValue + bpUnits);
+                    Log.d("onCharacteristicChanged", "meanAP -> " + meanAPValue + bpUnits);
+                    Log.d("onCharacteristicChanged", "Heart rate  -> " + heartRate + "bpm");
+                    Log.d("onCharacteristicChanged", "Time&Date -> " + hour + ":" + minutestr + ":" + secondstr + " " + year + "/" + monthstr + "/" + daystr);
+                }
+
             }
         }
         @Override

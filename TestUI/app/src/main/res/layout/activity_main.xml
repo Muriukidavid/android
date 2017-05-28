@@ -25,8 +25,144 @@
         android:id="@+id/orodha"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:visibility="invisible">
     </ListView>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:background="@color/colorBatt"
+        android:orientation="horizontal"
+        android:weightSum="2">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingLeft="8dp"
+            android:text="Systolic"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/systolic"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingRight="8dp"
+            android:text="--"
+            android:textSize="18sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:background="@color/colorBatt"
+        android:orientation="horizontal"
+        android:weightSum="2">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingLeft="8dp"
+            android:text="Diastolic"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/diastolic"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingRight="8dp"
+            android:text=".."
+            android:textSize="18sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:background="@color/colorBatt"
+        android:orientation="horizontal"
+        android:weightSum="2">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingLeft="8dp"
+            android:text="MeanAP"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/meanap"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingRight="8dp"
+            android:text=".."
+            android:textSize="18sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:background="@color/colorBatt"
+        android:orientation="horizontal"
+        android:weightSum="2">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingLeft="8dp"
+            android:text="Heart Rate"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/heartrate"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingRight="8dp"
+            android:text=".."
+            android:textSize="18sp" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="40dp"
+        android:background="@color/colorBatt"
+        android:orientation="horizontal"
+        android:weightSum="2">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="left"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingLeft="8dp"
+            android:text="Date &amp; Time"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/datetime"
+            android:layout_width="wrap_content"
+            android:layout_height="fill_parent"
+            android:layout_gravity="right"
+            android:layout_weight="1"
+            android:gravity="center_vertical|center"
+            android:paddingRight="8dp"
+            android:text=".."
+            android:textSize="18sp" />
+    </LinearLayout>
     <android.support.v4.widget.Space
         android:layout_width="match_parent"
         android:layout_height="0dp"
