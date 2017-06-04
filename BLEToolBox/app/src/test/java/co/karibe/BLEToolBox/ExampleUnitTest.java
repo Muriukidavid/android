@@ -1,4 +1,4 @@
-package co.karibe.testui;
+package co.karibe.BLEToolBox;
 
 import org.junit.Test;
 

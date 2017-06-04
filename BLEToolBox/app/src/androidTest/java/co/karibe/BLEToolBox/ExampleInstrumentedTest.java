@@ -1,4 +1,4 @@
-package co.karibe.testui;
+package co.karibe.BLEToolBox;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("co.karibe.testui", appContext.getPackageName());
+        assertEquals("co.karibe.BLEToolBox", appContext.getPackageName());
     }
 }
