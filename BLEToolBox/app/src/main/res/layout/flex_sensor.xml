@@ -14,7 +14,8 @@
         android:minHeight="?attr/actionBarSize"
         app:titleTextColor="@android:color/white"
         android:layout_alignParentTop="true"
-        />
+        >
+    </android.support.v7.widget.Toolbar>
     <ListView
         android:id="@+id/orodha"
         android:layout_width="match_parent"
@@ -23,122 +24,127 @@
         android:visibility="invisible">
     </ListView>
     <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
         android:background="@color/colorBattery"
         android:orientation="vertical"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
         android:layout_below="@id/orodha"
         >
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:paddingBottom="0dp"
             android:background="@color/colorBattery"
             android:orientation="horizontal"
             android:weightSum="2">
             <TextView
-                android:id="@+id/systolic1"
+                android:id="@+id/thumb"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/systolic"/>
+                android:padding="10dp"
+                android:text="@string/thumb"/>
             <TextView
-                android:id="@+id/systolic"
+                android:id="@+id/thumb2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                android:padding="10dp"
                 android:text="@string/empty"
                 android:textAlignment="textEnd" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:paddingBottom="0dp"
+            android:layout_height="40dp"
             android:background="@color/colorBattery"
             android:orientation="horizontal"
             android:weightSum="2">
             <TextView
-                android:id="@+id/diastolic1"
+                android:id="@+id/index"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/diastolic" />
+                android:padding="10dp"
+                android:text="@string/index" />
             <TextView
-                android:id="@+id/diastolic"
+                android:id="@+id/index2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                android:padding="10dp"
                 android:text="@string/empty"
                 android:textAlignment="textEnd" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:paddingBottom="0dp"
+            android:layout_height="40dp"
             android:background="@color/colorBattery"
             android:orientation="horizontal"
             android:weightSum="2">
             <TextView
-                android:id="@+id/meanAP1"
+                android:id="@+id/middle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/meanAP" />
+                android:padding="10dp"
+                android:text="@string/middle" />
+
             <TextView
-                android:id="@+id/meanAP"
+                android:id="@+id/middle2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                android:padding="10dp"
                 android:text="@string/empty"
                 android:textAlignment="textEnd" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:paddingBottom="0dp"
+            android:layout_height="40dp"
             android:background="@color/colorBattery"
             android:orientation="horizontal"
             android:weightSum="2">
             <TextView
+                android:id="@+id/ring"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/heat_rate_txt" />
+                android:padding="10dp"
+                android:text="@string/ring" />
+
             <TextView
-                android:id="@+id/bp_heart_rate"
+                android:id="@+id/ring2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                android:padding="10dp"
                 android:text="@string/empty"
                 android:textAlignment="textEnd" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:padding="16dp"
-            android:paddingBottom="0dp"
+            android:layout_height="40dp"
             android:background="@color/colorBattery"
             android:orientation="horizontal"
             android:weightSum="2">
             <TextView
+                android:id="@+id/small"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="@string/dateTime" />
+                android:padding="10dp"
+                android:text="@string/small" />
+
             <TextView
-                android:id="@+id/datetime"
+                android:id="@+id/small2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="end"
                 android:layout_weight="1"
+                android:padding="10dp"
                 android:text="@string/empty"
                 android:textAlignment="textEnd" />
         </LinearLayout>
@@ -146,51 +152,26 @@
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:padding="16dp"
-        android:paddingBottom="0dp"
-        android:layout_marginBottom="24dp"
+        android:background="@color/colorBattery"
         android:orientation="horizontal"
         android:layout_alignParentBottom="true">
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="40dp"
-            android:layout_gravity="bottom"
-            android:contentDescription="@string/nxp_logo"
-            android:src="@mipmap/nxp" />
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:paddingLeft="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:layout_alignParentBottom="true"
-        android:background="@color/colorBattery"
-        android:orientation="horizontal">
+
         <TextView
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="start"
+            android:id="@+id/battery_level1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:gravity="center_vertical|start"
-            android:text="@string/battery_level" />
+            android:padding="10dp"
+            android:text="@string/battery_level"/>
+
         <TextView
             android:id="@+id/battery_level"
-            android:layout_width="0dp"
-            android:layout_height="fill_parent"
-            android:layout_gravity="center"
-            android:layout_weight="1"
-            android:gravity="center_vertical|center"
-            android:text="@string/empty"
-            android:textSize="18sp"/>
-        <ImageView
-            android:id="@+id/device_information"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical|end"
             android:layout_gravity="end"
-            android:contentDescription="@string/info_logo"
-            android:src="@mipmap/ic_error_outline_blue_24px"/>
+            android:layout_weight="1"
+            android:padding="10dp"
+            android:text="@string/empty"
+            android:textAlignment="textEnd"/>
     </LinearLayout>
 </RelativeLayout>

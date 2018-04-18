@@ -20,7 +20,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="co.karibe.BLEToolBox.Display" android:parentActivityName="co.karibe.BLEToolBox.MainActivity">
+        <activity android:name="co.karibe.BLEToolBox.Display"
+            android:parentActivityName="co.karibe.BLEToolBox.MainActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="co.karibe.BLEToolBox.MainActivity" />

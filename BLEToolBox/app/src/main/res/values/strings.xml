@@ -1,5 +1,46 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- General app Strings -->
     <string name="app_name">BLE Toolbox</string>
     <string name="ble_not_supported">BLE is not supported on this device</string>
     <string name="ble_supported">BLE is supported on this device</string>
+
+    <!-- Menu items strings -->
+    <string name="scan">SCAN</string>
+    <string name="stop">STOP</string>
+    <string name="connect">CONNECT</string>
+    <string name="disconnect">DISCONNECT</string>
+
+    <!-- UUID Strings-->
+    <string name="uuid_mask" tools:ignore="TypographyDashes">0000FFFF-0000-0000-0000-000000000000</string>
+
+    <!-- MainActivity Layout strings -->
+    <string name="flex_sensors">Flex Sensors Icon</string>
+    <string name="blood_pressure">Blood Pressure Icon</string>
+    <string name="heat_rate">Heart Rate Icon</string>
+    <string name="flex_sensors_txt">Flex Sensors</string>
+    <string name="blood_pressure_txt">Blood Pressure</string>
+    <string name="heat_rate_txt">Heart Rate</string>
+    <string name="author">© Karibe Consulting</string>
+
+    <!-- Flex sensors layout strings-->
+    <string name="empty">--</string>
+    <string name="thumb">The Thumb</string>
+    <string name="index">Index Finger</string>
+    <string name="middle">Middle Finger</string>
+    <string name="ring">Ring Finger</string>
+    <string name="small">Small Finger</string>
+    <string name="battery_level">Battery Level</string>
+
+    <!-- Blood Pressure layout strings -->
+    <string name="emptyBloodPressure">-- Bmp</string>
+    <string name="dateTime">Date &amp; Time</string>
+    <string name="meanAP">Mean AP</string>
+    <string name="systolic">Systolic</string>
+    <string name="diastolic">Diastolic</string>
+    <!-- MAC ADDRESS to scan for flex sensors service -->
+    <string name="macAddress">00:60:37:23:4F:3A</string>
+
+    <!-- Image descriptions -->
+    <string name="nxp_logo">NXP Logo</string>
+    <string name="info_logo">Information button</string>
 </resources>

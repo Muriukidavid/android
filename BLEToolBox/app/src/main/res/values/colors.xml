@@ -3,5 +3,5 @@
     <color name="colorPrimary">#3F51B5</color>
     <color name="colorPrimaryDark">#303F9F</color>
     <color name="colorAccent">#FF4081</color>
-    <color name="colorBatt">#f0ab4f</color>
+    <color name="colorBattery">#f0ab4f</color>
 </resources>

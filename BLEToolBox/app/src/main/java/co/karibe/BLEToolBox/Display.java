@@ -1,5 +1,6 @@
 package co.karibe.BLEToolBox;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -32,18 +33,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 
 import static co.karibe.BLEToolBox.R.id.toolbar;
 /**
+ * BLEToolBox:
  * Created by karibe on 6/3/17.
  */
 
@@ -52,13 +56,13 @@ public class Display extends AppCompatActivity {
     private BluetoothAdapter mBluetoothAdapter;
     private final static int REQUEST_ENABLE_BT = 1;
     private Handler mHandler;
-    private static final long SCAN_PERIOD = 5000;
+    private static final long SCAN_PERIOD = 10000;
     private BluetoothLeScanner mLEScanner;
     private ScanSettings mSettings;
     private List<ScanFilter> mFilters;
     private BluetoothGatt mGatt;
     private List<BluetoothGattService> mServices;
-    private ArrayList<ArrayList<String>> mItems = new ArrayList<ArrayList<String>>();
+    private ArrayList<ArrayList<String>> mItems = new ArrayList<>();
     private ListView mListView;
     private ScanResult result;
     private BluetoothDevice mDevice;
@@ -66,11 +70,14 @@ public class Display extends AppCompatActivity {
     private int mBatteryLevel;
     private int scanCount;
     private String mMessage;
+    private BluetoothGattCharacteristic mCharacteristic;
+    private BluetoothGattService mService;
     //whether to log debug messages
-    private final static boolean debug = false;
+    private final static boolean debug = true;
 
     //Gap service UUID
     private static final UUID GenAccess_Service_UUID = UUID.fromString("00001800-0000-1000-8000-00805f9b34fb");
+
     //Gatt Service UUID
     private static final UUID GattService_UUID = UUID.fromString("00001801-0000-1000-8000-00805f9b34fb");
     //Client Characteristic Configuration Descriptor declaration UUID
@@ -78,7 +85,7 @@ public class Display extends AppCompatActivity {
     private static final UUID DescriptorConfig_UUID = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb");
     //Server Characteristic Configuration Descriptor declaration UUID
     //for changing a characteristic for many clients on one server
-    private static final UUID ServerDescriptorConfig_UUID = UUID.fromString("00002903-0000-1000-8000-00805f9b34fb");
+    //private static final UUID ServerDescriptorConfig_UUID = UUID.fromString("00002903-0000-1000-8000-00805f9b34fb");
     //Battery service UUID
     private static final UUID Battery_Service_UUID = UUID.fromString("0000180F-0000-1000-8000-00805f9b34fb");
     //Battery level characteristic UUID
@@ -89,8 +96,21 @@ public class Display extends AppCompatActivity {
     private static final UUID Heart_rate_UUID = UUID.fromString("00002a37-0000-1000-8000-00805f9b34fb");
     //Device information service UUID
     private static final UUID DeviceInfo_Service_UUID = UUID.fromString("0000180A-0000-1000-8000-00805f9b34fb");
-    //Device manufacturer characteristic UUID
+    //Device manufacturer characteristic UUID - UTF-8 string
     private static final UUID DeviceManufacturer_UUID = UUID.fromString("00002a29-0000-1000-8000-00805f9b34fb");
+    //Device Serial Number characteristic - UTF-8 string
+    private static final UUID DeviceSerialNumber_UUID = UUID.fromString("00002a25-0000-1000-8000-00805f9b34fb");
+    //Device model number characteristic
+    private static final UUID DeviceModelNumber_UUID = UUID.fromString("00002a24-0000-1000-8000-00805f9b34fb");
+    //Device hardware revision characteristic - UTF-8 string
+    private static final UUID DeviceHardwareRevision_UUID = UUID.fromString("00002a27-0000-1000-8000-00805f9b34fb");
+    //Device firmware revision characteristic - UTF-8 string
+    private static final UUID DeviceFirmwareRevision_UUID = UUID.fromString("00002a26-0000-1000-8000-00805f9b34fb");
+    //Device software revision characteristic - UTF-8 string
+    private static final UUID DeviceSoftwareRevision_UUID = UUID.fromString("00002a28-0000-1000-8000-00805f9b34fb");
+    //Device System ID characteristic - UTF-8 string
+    //private static final UUID DeviceSystemID_UUID = UUID.fromString("00002a23-0000-1000-8000-00805f9b34fb");
+
     //Device name characteristic UUID
     private static final UUID DeviceName_UUID = UUID.fromString("00002a00-0000-1000-8000-00805f9b34fb");
     //Blood pressure service UUID
@@ -102,6 +122,13 @@ public class Display extends AppCompatActivity {
     //Intermediate cuff pressure characteristic UUID
     private static final UUID IntermediatePressure_UUID = UUID.fromString("00002A36-0000-1000-8000-00805f9b34fb");
 
+    //private static final UUID FLX_Service_UUID = UUID.fromString("0000F1E3-0000-1000-8000-00805f9b34fb");
+    private static final UUID FLX_Service_UUID = UUID.fromString("01ff0300-ba5e-f4ee-5ca1-eb1e5e4b1ce0");
+    private static final UUID Flx_UUID = UUID.fromString("0000F1E8-0000-1000-8000-00805f9b34fb");
+
+    //private static final UUID Temperature_Service_UUID = UUID.fromString("01ff0200-ba5e-f4ee-5ca1-eb1e5e4b1ce0");
+    //private static final UUID Temperature_UUID = UUID.fromString("00002a1c-0000-1000-8000-00805f9b34fb");
+    @SuppressWarnings("ObsoleteSdkInt")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -110,17 +137,20 @@ public class Display extends AppCompatActivity {
         mMessage = intent.getStringExtra(MainActivity.EXTRA_MESSAGE);
         //Display required layout
         switch (mMessage){
-            case "pressure":
+            case "blood_pressure":
                 setContentView(R.layout.blood_pressure);
                 break;
-            case "heartrate":
+            case "heart_rate":
                 setContentView(R.layout.heart_rate);
                 break;
+            case "flex_sensors":
+                setContentView(R.layout.flex_sensor);
         }
 
         //activate our Toolbar
         mToolbar = (Toolbar)findViewById(toolbar);
-        mToolbar.setTitle("Kinetis BLE Toolbox: "+mMessage);
+        String m = mMessage.replace("_"," ");
+        mToolbar.setTitle("BLE Toolbox: "+m);
         setSupportActionBar(mToolbar);
         //initialize some objects
         scanCount = 0;
@@ -154,37 +184,47 @@ public class Display extends AppCompatActivity {
             finish();
         } else {
             final BluetoothManager bluetoothManager =
-                    (BluetoothManager) getSystemService(Display.this.BLUETOOTH_SERVICE);
+                    (BluetoothManager) getSystemService(BLUETOOTH_SERVICE);
             mBluetoothAdapter = bluetoothManager.getAdapter();
             if (mBluetoothAdapter == null || !mBluetoothAdapter.isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
             }
             //TODO: Add scanning filters for all other type of sensors
-            if (Build.VERSION.SDK_INT >= 21) {
+            if (Build.VERSION.SDK_INT >= 21) {//Only work in BLE enabled devices
                 mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
                 mSettings = new ScanSettings.Builder()
-                        .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                        .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                         .build();
                 mFilters = new ArrayList<>();//ScanFilter
                 switch(mMessage){
-                    case "pressure":
-                        ParcelUuid parcelUuidbp =  new ParcelUuid(UUID.fromString("00001810-0000-0000-0000-000000000000"));
-                        ParcelUuid parcelUuidMaskbp = new ParcelUuid(UUID.fromString("0000FFFF-0000-0000-0000-000000000000"));
-                        ScanFilter filterbp = new ScanFilter.Builder()
-                                .setServiceUuid(parcelUuidbp,parcelUuidMaskbp)
+                    case "blood_pressure":
+                        ParcelUuid parcelUuid_bp =  new ParcelUuid(UUID.fromString("00001810-0000-0000-0000-000000000000"));
+                        ParcelUuid parcelUuidMask_bp = new ParcelUuid(UUID.fromString(getString(R.string.uuid_mask)));
+                        ScanFilter filter_bp = new ScanFilter.Builder()
+                                .setServiceUuid(parcelUuid_bp, parcelUuidMask_bp)
                                 .build();
-                        mFilters.add(filterbp);
+                        mFilters.add(filter_bp);
                         break;
-                    case "heartrate":
-                        ParcelUuid parcelUuidhr =  new ParcelUuid(UUID.fromString("0000180D-0000-0000-0000-000000000000"));
-                        ParcelUuid parcelUuidMaskhr = new ParcelUuid(UUID.fromString("0000FFFF-0000-0000-0000-000000000000"));
-                        ScanFilter filterhr = new ScanFilter.Builder()
-                                .setServiceUuid(parcelUuidhr,parcelUuidMaskhr)
+                    case "heart_rate":
+                        ParcelUuid parcelUuid_hr =  new ParcelUuid(UUID.fromString("0000180D-0000-0000-0000-000000000000"));
+                        ParcelUuid parcelUuidMask_hr = new ParcelUuid(UUID.fromString(getString(R.string.uuid_mask)));
+                        ScanFilter filter_hr = new ScanFilter.Builder()
+                                .setServiceUuid(parcelUuid_hr, parcelUuidMask_hr)
                                 .build();
-                        mFilters.add(filterhr);
-                        default:
-                            Log.w("onCreate","No service filter requested");
+                        mFilters.add(filter_hr);
+                    case "flex_sensors":
+                        /*ParcelUuid parcelUuid_tmp = new ParcelUuid(UUID.fromString("0000F1E3-0000-0000-0000-000000000000"));
+                        ParcelUuid parcelUuidMask_tmp = new ParcelUuid(UUID.fromString(getString(R.string.uuid_mask)));
+                        ScanFilter filter_tmp = new ScanFilter.Builder()
+                                .setServiceUuid(parcelUuid_tmp, parcelUuidMask_tmp)
+                                .build();
+                        mFilters.add(filter_tmp);*/
+                        //edit the Mac Address at the end of string.xml resource
+                        ScanFilter filter = new ScanFilter.Builder().setDeviceAddress(getString(R.string.macAddress)).build();
+                        mFilters.add(filter);
+                    default:
+                        Log.w("onCreate","No service filter requested");
                 }
             }
         }
@@ -199,22 +239,23 @@ public class Display extends AppCompatActivity {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 if (debug) {
-                    Log.d("mActionstitle",item.getTitle().toString());
+                    Log.d("Actions_title",item.getTitle().toString());
                 }
                 if (item.getTitle().toString().equalsIgnoreCase("SCAN")) {
                     scanLeDevice(true);
-                    item.setTitle("Stop");
+                    item.setTitle(R.string.stop);
                 }else if(item.getTitle().toString().equalsIgnoreCase("STOP")){
                     scanLeDevice(false);
-                    item.setTitle("SCAN");
+                    item.setTitle(R.string.scan);
                 }else if(item.getTitle().toString().equalsIgnoreCase("DISCONNECT")){
                     mGatt.disconnect();
                     mGatt=null;
                     item.setTitle("CONNECT");
-                    TextView txt = (TextView)findViewById(R.id.batt_level);
+                    item.getIcon().setVisible(false,true);
+                    TextView txt = (TextView)findViewById(R.id.battery_level);
                     txt.setText("---");
                 }else if(item.getTitle().toString().equalsIgnoreCase("CONNECT")){
-                    //TODO: Test reconnecting to same mDevice
+                    //DONE: Test reconnecting to same mDevice
                     mDevice =mBluetoothAdapter.getRemoteDevice(result.getDevice().getAddress());
                     if(!(mDevice ==null)) {
                         if(debug) {
@@ -226,7 +267,7 @@ public class Display extends AppCompatActivity {
                         if (debug) {
                             Log.w("CONNECT", "No mDevice available");
                         }
-                        item.setTitle("SCAN");
+                        item.setTitle(getString(R.string.scan));
                     }
                 }
                 return true;
@@ -235,6 +276,7 @@ public class Display extends AppCompatActivity {
         return true;
     }
 
+    @SuppressLint("ObsoleteSdkInt")
     @Override
     protected void onResume() {
         super.onResume();
@@ -245,26 +287,54 @@ public class Display extends AppCompatActivity {
         if (Build.VERSION.SDK_INT >= 21) {
             mLEScanner = mBluetoothAdapter.getBluetoothLeScanner();
             mSettings = new ScanSettings.Builder()
-                    .setScanMode(ScanSettings.SCAN_MODE_LOW_POWER)
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
                     .build();
             mFilters = new ArrayList<>();//ScanFilter
             //TODO: Add all other possible services from NXP Connectivity Software examples
             switch(mMessage){
-                case "pressure":
-                    ParcelUuid parcelUuidbp =  new ParcelUuid(UUID.fromString("00001810-0000-0000-0000-000000000000"));
-                    ParcelUuid parcelUuidMaskbp = new ParcelUuid(UUID.fromString("0000FFFF-0000-0000-0000-000000000000"));
-                    ScanFilter filterbp = new ScanFilter.Builder()
-                            .setServiceUuid(parcelUuidbp,parcelUuidMaskbp)
+                case "blood_pressure":
+                    ParcelUuid parcelUuid_bp =  new ParcelUuid(UUID.fromString("00001810-0000-0000-0000-000000000000"));
+                    ParcelUuid parcelUuidMask_bp = new ParcelUuid(UUID.fromString(getString(R.string.uuid_mask)));
+                    ScanFilter filter_bp = new ScanFilter.Builder()
+                            .setServiceUuid(parcelUuid_bp, parcelUuidMask_bp)
                             .build();
-                    mFilters.add(filterbp);
+                    mFilters.add(filter_bp);
+                    ImageView info = (ImageView)findViewById(R.id.device_information);
+                    info.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            //read device info service
+                            BluetoothGattService device_information = mGatt.getService(DeviceInfo_Service_UUID);
+                            List<BluetoothGattCharacteristic> x_tics = device_information.getCharacteristics();
+                            long tout = 0;
+                            for (final BluetoothGattCharacteristic x_tic : x_tics){
+                                tout +=1000;
+                                new Timer().schedule(new TimerTask() {
+                                    @Override
+                                    public void run() {
+                                        mGatt.readCharacteristic(x_tic);
+                                    }
+                                },tout);
+                            }
+                        }
+                    });
                     break;
-                case "heartrate":
-                    ParcelUuid parcelUuidhr =  new ParcelUuid(UUID.fromString("0000180D-0000-0000-0000-000000000000"));
-                    ParcelUuid parcelUuidMaskhr = new ParcelUuid(UUID.fromString("0000FFFF-0000-0000-0000-000000000000"));
-                    ScanFilter filterhr = new ScanFilter.Builder()
-                            .setServiceUuid(parcelUuidhr,parcelUuidMaskhr)
+                case "heart_rate":
+                    ParcelUuid parcelUuid_hr =  new ParcelUuid(UUID.fromString("0000180D-0000-0000-0000-000000000000"));
+                    ParcelUuid parcelUuidMask_hr = new ParcelUuid(UUID.fromString(getString(R.string.uuid_mask)));
+                    ScanFilter filter_hr = new ScanFilter.Builder()
+                            .setServiceUuid(parcelUuid_hr, parcelUuidMask_hr)
                             .build();
-                    mFilters.add(filterhr);
+                    mFilters.add(filter_hr);
+                case "flex_sensors":
+                    //ParcelUuid parcelUuid_tmp = new ParcelUuid(UUID.fromString("0000F1E3-0000-0000-0000-000000000000"));
+                    //ParcelUuid parcelUuidMask_tmp = new ParcelUuid(UUID.fromString(getString(R.string.uuid_mask)));
+                    ScanFilter filter = new ScanFilter.Builder().setDeviceAddress("00:60:37:23:4F:3A").build();
+                    mFilters.add(filter);
+                    /*ScanFilter filter_tmp = new ScanFilter.Builder()
+                            .setServiceUuid(parcelUuid_tmp,parcelUuidMask_tmp)
+                            .build();
+                    mFilters.add(filter_tmp);*/
                 default:
                     Log.w("onCreate","No service filter requested");
             }
@@ -316,6 +386,7 @@ public class Display extends AppCompatActivity {
                 }
             }, SCAN_PERIOD);
             mLEScanner.startScan(mFilters, mSettings, mScanCallback);
+            //mLEScanner.startScan(mScanCallback);
             scanCount++;
             if (debug) {
                 Log.i("scanCount", Integer.toString(scanCount));
@@ -332,9 +403,10 @@ public class Display extends AppCompatActivity {
             result = res;
             BluetoothDevice btDevice = result.getDevice();
             mDevice =btDevice;
+            Log.d("onScanResult device: ",mDevice.toString());
             String s = btDevice.getName();
             String s2 = btDevice.getAddress();
-            ArrayList<String> row = new ArrayList<String>();
+            ArrayList<String> row = new ArrayList<>();
             row.add(0,s);
             row.add(1,s2);
             if (!mItems.contains(row)) {
@@ -343,7 +415,7 @@ public class Display extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    mMenuItem.setTitle("Scan");
+                    mMenuItem.setTitle(R.string.scan);
                     ((BaseAdapter) mListView.getAdapter()).notifyDataSetChanged();
                 }
             });
@@ -366,7 +438,7 @@ public class Display extends AppCompatActivity {
 
     public void connectToDevice(BluetoothDevice device) {
         if (mGatt == null) {
-            mGatt = device.connectGatt(this, false, gattCallback);
+            mGatt = device.connectGatt(this, false, gattCallback, 2);
             scanLeDevice(false);// will stop after first mDevice detection
         }else{
             if (debug) {
@@ -397,7 +469,6 @@ public class Display extends AppCompatActivity {
                         Log.d("gattCallback", "STATE_OTHER");
                     }
             }
-
         }
         @Override
         public void onServicesDiscovered(final BluetoothGatt gatt, int status) {
@@ -574,48 +645,80 @@ public class Display extends AppCompatActivity {
                     }
                 }
             },7000);
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    BluetoothGattService FlexSensorService = gatt.getService(FLX_Service_UUID);
+                    if (FlexSensorService == null) {
+                        if (debug) {
+                            Log.d("onServicesDiscovered", "Flex Sensors service not available");
+                        }
+                    } else {
+                        BluetoothGattCharacteristic flex_sensors = FlexSensorService.getCharacteristic(Flx_UUID);
+                        if (flex_sensors == null) {
+                            if (debug) {
+                                Log.d("onServicesDiscovered", "No Flex Sensors Characteristic found");
+                            }
+                        } else {
+                            gatt.setCharacteristicNotification(flex_sensors, true);
+                            BluetoothGattDescriptor descriptor = flex_sensors.getDescriptor(DescriptorConfig_UUID);
+                            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+                            gatt.writeDescriptor(descriptor);
+                            if (debug) {
+                                Log.d("onServicesDiscovered", "Enabled Flex Sensors measurement notification");
+                            }
+                        }
+                    }
+                }
+            },8000);
 
             mItems.clear();
             int i=0;
             for(BluetoothGattService service: mServices) {
                 if (service.getUuid().equals(Battery_Service_UUID)) {
-                    ArrayList<String> it = new ArrayList<String>();
+                    ArrayList<String> it = new ArrayList<>();
                     it.add(0, "Battery Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
                     i++;
                 } else if (service.getUuid().equals(HeartRate_Service_UUID)){
-                    ArrayList<String> it = new ArrayList<String>();
+                    ArrayList<String> it = new ArrayList<>();
                     it.add(0, "Heart Rate Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
                     i++;
                 } else if (service.getUuid().equals(DeviceInfo_Service_UUID)) {
-                    ArrayList<String> it = new ArrayList<String>();
-                    it.add(0, " Device Info Service");
+                    ArrayList<String> it = new ArrayList<>();
+                    it.add(0, "Device Info Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
                     i++;
                 }else if (service.getUuid().equals(GenAccess_Service_UUID)) {
-                    ArrayList<String> it = new ArrayList<String>();
+                    ArrayList<String> it = new ArrayList<>();
                     it.add(0, "Generic Access Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
                     i++;
                 }else if(service.getUuid().equals(BPS_Service_UUID)){
-                    ArrayList<String> it = new ArrayList<String>();
+                    ArrayList<String> it = new ArrayList<>();
                     it.add(0, "Blood Pressure Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
                     i++;
                 }else if(service.getUuid().equals(GattService_UUID)){
-                    ArrayList<String> it = new ArrayList<String>();
+                    ArrayList<String> it = new ArrayList<>();
                     it.add(0, "Gatt Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
                     i++;
+                }else if(service.getUuid().equals(FLX_Service_UUID)){
+                    ArrayList<String> it = new ArrayList<>();
+                    it.add(0, "Fles sensors Service");
+                    it.add(1, service.getUuid().toString());
+                    mItems.add(i, it);
+                    i++;
                 }else {
-                    ArrayList<String> it = new ArrayList<String>();
+                    ArrayList<String> it = new ArrayList<>();
                     it.add(0, " Other Service");
                     it.add(1, service.getUuid().toString());
                     mItems.add(i, it);
@@ -629,38 +732,54 @@ public class Display extends AppCompatActivity {
                     mListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
                         @Override
                         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                            BluetoothGattCharacteristic xtic = mServices.get(position).getCharacteristics().get(0);
+                            List<BluetoothGattCharacteristic> x_tics = mServices.get(position).getCharacteristics();
+                            long timeout=0;
+                            for(BluetoothGattCharacteristic x_tic : x_tics){
+                                timeout += 1000;
+                                mCharacteristic = x_tic;
+                                mService = mServices.get(position);
+                                //if (debug){
+                                    new Timer().schedule(new TimerTask() {
+                                        @Override
+                                        public void run() {
+                                            Log.d("onServicesDiscovered", mService.toString()+" read: "+gatt.readCharacteristic(mCharacteristic));
+                                        }
+                                    }, timeout);
+                                //}
+                            }
+                            /*
                             if (debug){
-                                Log.i("Characteristics",xtic.getUuid().toString());
+                                Log.i("Characteristics",x_tic.getUuid().toString());
                             }
-                            if(xtic.getUuid().toString().equalsIgnoreCase(DeviceName_UUID.toString())){
+                            if(x_tic.getUuid().toString().equalsIgnoreCase(DeviceName_UUID.toString())){
                                 if (debug){
-                                    Log.d("onServicesDiscovered","Device name read: "+gatt.readCharacteristic(xtic));
+                                    Log.d("onServicesDiscovered","Device name read: "+gatt.readCharacteristic(x_tic));
                                 }
                             }
-                            if(xtic.getUuid().toString().equalsIgnoreCase(DeviceManufacturer_UUID.toString())){
+                            if(x_tic.getUuid().toString().equalsIgnoreCase(DeviceManufacturer_UUID.toString())){
                                 if (debug){
-                                    Log.d("onServicesDiscovered","Device Manufacturer read: "+gatt.readCharacteristic(xtic));
+                                    Log.d("onServicesDiscovered","Device Manufacturer read: "+gatt.readCharacteristic(x_tic));
                                 }
                             }
-                            if(xtic.getUuid().toString().equalsIgnoreCase(Heart_rate_UUID.toString())){
+                            if(x_tic.getUuid().toString().equalsIgnoreCase(Heart_rate_UUID.toString())){
                                 if (debug){
-                                    Log.d("onServicesDiscovered","Heart rate read: "+gatt.readCharacteristic(xtic));
+                                    Log.d("onServicesDiscovered","Heart rate read: "+gatt.readCharacteristic(x_tic));
                                 }
                             }
-                            if(xtic.getUuid().toString().equalsIgnoreCase(Battery_Level_UUID.toString())){
+                            if(x_tic.getUuid().toString().equalsIgnoreCase(Battery_Level_UUID.toString())){
                                 if (debug){
-                                    Log.d("onServicesDiscovered","Battery level read: "+gatt.readCharacteristic(xtic));
+                                    Log.d("onServicesDiscovered","Battery level read: "+gatt.readCharacteristic(x_tic));
                                 }
                             }
-                            if(xtic.getUuid().toString().equalsIgnoreCase(Bps_UUID.toString())){
+                            if(x_tic.getUuid().toString().equalsIgnoreCase(Bps_UUID.toString())){
                                 if (debug){
-                                    Log.d("onServicesDiscovered","Blood pressure read: "+gatt.readCharacteristic(xtic));
+                                    Log.d("onServicesDiscovered","Blood pressure read: "+gatt.readCharacteristic(x_tic));
                                 }
-                            }
+                            }*/
+
                         }
                     });
-                    mMenuItem.setTitle("DISCONNECT");
+                    mMenuItem.setTitle(R.string.disconnect);
                 }
             });
         }
@@ -670,6 +789,7 @@ public class Display extends AppCompatActivity {
                                          BluetoothGattCharacteristic
                                                  characteristic, int status) {
             if(status==BluetoothGatt.GATT_SUCCESS) {
+                //blood pressure feature
                 if(characteristic.getUuid().equals(BloodPressureFeature_UUID)){
                     //010110 => BP features read result
                     //Body mov't detection not supported
@@ -695,7 +815,7 @@ public class Display extends AppCompatActivity {
                     }
                 }
                 //Battery level manual read
-                else if (characteristic.getUuid().toString().equalsIgnoreCase(Battery_Level_UUID.toString())) {
+                else if (characteristic.getUuid().equals(Battery_Level_UUID)) {
                     int level = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
                     mBatteryLevel = level;
                     if (debug){
@@ -704,30 +824,66 @@ public class Display extends AppCompatActivity {
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            TextView txt = (TextView)findViewById(R.id.batt_level);
+                            TextView txt = (TextView)findViewById(R.id.battery_level);
                             txt.setText(Integer.toString(mBatteryLevel).concat("%"));
                         }
                     });
                 }
                 //mDevice manufacturer manual read
-                else if(characteristic.getUuid().toString().equalsIgnoreCase(DeviceManufacturer_UUID.toString())){
+                else if(characteristic.getUuid().equals(DeviceManufacturer_UUID)){
                     if (debug) {
                         Log.d("onCharacteristicRead", "Device Manufacturer: " + characteristic.getStringValue(0));
+                        Log.d("Length of Manu Name: ", Integer.toString(characteristic.getValue().length));
                     }
-                }else if(characteristic.getUuid().toString().equalsIgnoreCase(Heart_rate_UUID.toString())){
+                }
+                //mDevice model number read
+                else if(characteristic.getUuid().equals(DeviceModelNumber_UUID)){
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Model Number: " + characteristic.getStringValue(0));
+                    }
+                }
+                //mDevice serial number
+                else if(characteristic.getUuid().equals(DeviceSerialNumber_UUID)){
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Serial Number: " + characteristic.getStringValue(0));
+                    }
+                }
+                //mDevice Hardware revision
+                else if(characteristic.getUuid().equals(DeviceHardwareRevision_UUID)){
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Hardware Revision: " + characteristic.getStringValue(0));
+                    }
+                }
+                //mDevice firmware revision
+                else if(characteristic.getUuid().equals(DeviceFirmwareRevision_UUID)){
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Firmware Revision: " + characteristic.getStringValue(0));
+                    }
+                }
+                //mDevice software revision
+                else if(characteristic.getUuid().equals(DeviceSoftwareRevision_UUID)){
+                    if (debug) {
+                        Log.d("onCharacteristicRead", "Device Software Revision: " + characteristic.getStringValue(0));
+                    }
+                }
+                //heart rate read
+                else if(characteristic.getUuid().equals(Heart_rate_UUID)){
                     if (debug) {
                         Log.d("onCharacteristicRead", "Heart Rate: " + characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0)+"Bpm");
                     }
-                }else if (characteristic.getUuid().toString().equalsIgnoreCase(DeviceName_UUID.toString())){
+                }
+                //device name read
+                else if (characteristic.getUuid().equals(DeviceName_UUID)){
                     final String deviceName = characteristic.getStringValue(0);
+
                     runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            Toolbar myToolbar = (Toolbar)findViewById(toolbar);
-                            myToolbar.setTitle(deviceName);
-                            setSupportActionBar(myToolbar);
+                            mToolbar.setTitle(deviceName);
+                            setSupportActionBar(mToolbar);
                         }
                     });
+
                     if (debug) {
                         Log.d("onCharacteristicRead", "Device Name: " + deviceName);
                     }
@@ -741,12 +897,11 @@ public class Display extends AppCompatActivity {
         @Override
         public void onCharacteristicChanged(BluetoothGatt gatt, final BluetoothGattCharacteristic characteristic) {
             if(characteristic.getUuid().equals(Battery_Level_UUID)) {
-                int level = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-                mBatteryLevel = level;
+                mBatteryLevel = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        TextView txt = (TextView) findViewById(R.id.batt_level);
+                        TextView txt = (TextView) findViewById(R.id.battery_level);
                         txt.setText(Integer.toString(mBatteryLevel).concat("%"));
                     }
                 });
@@ -768,7 +923,7 @@ public class Display extends AppCompatActivity {
                         bool_t                      userIdPresent; //1 bit in 1st byte
                         bool_t                      measurementStatusPresent; //1 bit in 1st byte
                         ieee11073_16BitFloat_t      systolicValue; //2 bytes
-                        ieee11073_16BitFloat_t      diastolicValue; //2 bytes
+                        ieee11073_16BitFeloat_t      diastolicValue; //2 bytes
                         ieee11073_16BitFloat_t      meanArterialPressure; //2 bytes
                         ctsDateTime_t               timeStamp; //7 bytes may not be present
                         ieee11073_16BitFloat_t      pulseRate; //2 bytes
@@ -789,15 +944,15 @@ public class Display extends AppCompatActivity {
                 final int year = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,7);
                 int month = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,9);
                 int day = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,10);
-                final String monthstr=(month<10)?("0"+month):(""+month);
-                final String daystr=(day<10)?("0"+day):(""+day);
+                final String month_str =(month<10)?("0"+month):(""+month);
+                final String day_str =(day<10)?("0"+day):(""+day);
                 final int hour = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,11);
                 int minute = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,12);
                 int sec = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,13);
-                final String minutestr = (minute<10)?"0"+minute:Integer.toString(minute);
-                final String secondstr = (sec<10)?"0"+sec:""+sec;
+                final String minute_str = (minute<10)?"0"+minute:Integer.toString(minute);
+                final String second_str = (sec<10)?"0"+sec:""+sec;
                 final float heartRate = characteristic.getFloatValue(BluetoothGattCharacteristic.FORMAT_SFLOAT,14);
-                int userid = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,16);
+                int userId = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,16);
                 int measurementFlags = characteristic.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT16,17);
                 //update UI
                 runOnUiThread(new Runnable() {
@@ -805,28 +960,61 @@ public class Display extends AppCompatActivity {
                     public void run() {
                         TextView systolic = (TextView)findViewById(R.id.systolic);
                         TextView diastolic = (TextView)findViewById(R.id.diastolic);
-                        TextView meanAP = (TextView)findViewById(R.id.meanap);
-                        TextView heartrate = (TextView)findViewById(R.id.heartrate);
+                        TextView meanAP = (TextView)findViewById(R.id.meanAP);
+                        TextView heart_rate = (TextView)findViewById(R.id.bp_heart_rate);
                         TextView datetime = (TextView)findViewById(R.id.datetime);
                         systolic.setText(Float.toString(systolicValue));
                         diastolic.setText(Float.toString(diastolicValue));
                         meanAP.setText(Float.toString(meanAPValue));
-                        heartrate.setText(Float.toString(heartRate));
-                        datetime.setText(daystr+"/"+monthstr+"/"+Integer.toString(year)+" "+Integer.toString(hour)+":"+minutestr+":"+secondstr);
+                        //heart_rate.setText(Float.toString(heartRate));
+                        heart_rate.setText(String.format(Locale.getDefault(),"%f", heartRate));
+                        datetime.setText(day_str +"/"+ month_str +"/"+Integer.toString(year)+" "+Integer.toString(hour)+":"+ minute_str +":"+ second_str);
                     }
                 });
                 if (debug) {
                     //log the values
+                    Log.d("onCharacteristicChanged", "userId: " +String.format(Locale.getDefault(), "%d", userId));
+                    Log.d("onCharacteristicChanged", "measurementFlags: " +String.format(Locale.getDefault(), "%d", measurementFlags));
                     Log.d("onCharacteristicChanged", "Flags: units -> " + units + ", timeStampPresent-> " + timeStampPresent + ", pulseRatePresent-> " + pulseRatePresent + ", userIdPresent-> " + userIdPresent + ", measurementStatusPresent-> " + measurementStatusPresent);
                     Log.d("onCharacteristicChanged", "systolic -> " + systolicValue + bpUnits);
                     Log.d("onCharacteristicChanged", "diastolic -> " + diastolicValue + bpUnits);
                     Log.d("onCharacteristicChanged", "meanAP -> " + meanAPValue + bpUnits);
                     Log.d("onCharacteristicChanged", "Heart rate  -> " + heartRate + "bpm");
-                    Log.d("onCharacteristicChanged", "Time&Date -> " + hour + ":" + minutestr + ":" + secondstr + " " + year + "/" + monthstr + "/" + daystr);
+                    Log.d("onCharacteristicChanged", "Time&Date -> " + hour + ":" + minute_str + ":" + second_str + " " + year + "/" + month_str + "/" + day_str);
+
                 }
 
+            }else if(characteristic.getUuid().equals(Flx_UUID)) {
+                final byte fingers[] = characteristic.getValue();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView thumb_f = (TextView)findViewById(R.id.thumb2);
+                        TextView index_f = (TextView)findViewById(R.id.index2);
+                        TextView middle_f = (TextView)findViewById(R.id.middle2);
+                        TextView ring_f = (TextView)findViewById(R.id.ring2);
+                        TextView pinky_f = (TextView)findViewById(R.id.small2);
+                        int thumb = (fingers[1] & 0xFF) << (Byte.SIZE);
+                        thumb |= (fingers[0] & 0xFF);
+                        thumb_f.setText(Integer.toString(thumb));
+                        //Log.d("fingers data: ",Integer.toString(fingers.length));
+                        int index = (fingers[3] & 0xFF) << (Byte.SIZE);
+                        index |= (fingers[2] & 0xFF);
+                        index_f.setText(Integer.toString(index));
+                        int middle = (fingers[5] & 0xFF) << (Byte.SIZE);
+                        middle |= (fingers[4] & 0xFF);
+                        middle_f.setText(Integer.toString(middle));
+                        int ring = (fingers[7] & 0xFF) << (Byte.SIZE);
+                        ring |= (fingers[6] & 0xFF);
+                        ring_f.setText(Integer.toString(ring));
+                        int pinky = (fingers[9] & 0xFF) << (Byte.SIZE);
+                        pinky |= (fingers[8] & 0xFF);
+                        pinky_f.setText(Integer.toString(pinky));
+                    }
+                });
             }
         }
+
         @Override
         public void onDescriptorRead(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status){
             if(status==BluetoothGatt.GATT_SUCCESS){
@@ -839,12 +1027,12 @@ public class Display extends AppCompatActivity {
         }
     };
 
-    class CustomAdapter extends BaseAdapter {
+    private class CustomAdapter extends BaseAdapter {
         private LayoutInflater mInflater;
         private Activity activity;
         private ArrayList<ArrayList<String>> data;
 
-        public CustomAdapter(Activity a, ArrayList<ArrayList<String>> arr) {
+        private CustomAdapter(Activity a, ArrayList<ArrayList<String>> arr) {
             activity=a;
             data=arr;
             mInflater = (LayoutInflater)Display.this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

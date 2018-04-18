@@ -4,5 +4,7 @@
     <item
         android:id="@+id/mActions"
         app:showAsAction="ifRoom"
-        android:title="SCAN"/>
+        android:title="@string/scan"
+        android:icon="@android:drawable/ic_menu_mylocation"
+        />
 </menu>

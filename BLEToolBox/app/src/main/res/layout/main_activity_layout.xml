@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:background="?attr/colorPrimary"
+        android:minHeight="57dp"
+        app:titleTextColor="@android:color/white" />
+    <LinearLayout
+        android:id="@+id/icons1_layout"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_below="@id/toolbar"
+        >
+        <ImageView
+            android:id="@+id/bloodPressure"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:scaleType="centerCrop"
+            android:scaleX="0.7"
+            android:scaleY="0.7"
+            android:adjustViewBounds="true"
+            android:cropToPadding="true"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:src="@mipmap/blood_pressure"
+            android:contentDescription="@string/blood_pressure" />
+
+        <ImageView
+            android:id="@+id/heartRate"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_weight="1"
+            android:adjustViewBounds="true"
+            android:contentDescription="@string/heat_rate"
+            android:padding="8dp"
+            android:scaleType="centerCrop"
+            android:scaleX="0.7"
+            android:scaleY="0.7"
+            android:src="@mipmap/heart_rate" />
+
+        <ImageView
+            android:id="@+id/flexSensors"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:padding="8dp"
+            android:scaleType="centerCrop"
+            android:scaleX="0.7"
+            android:scaleY="0.7"
+            android:adjustViewBounds="true"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:src="@mipmap/gloves"
+            android:contentDescription="@string/flex_sensors" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/icons1_layout">
+        <TextView
+            android:id="@+id/bp_text"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="@string/blood_pressure_txt"
+            android:textAlignment="center" />
+        <TextView
+            android:id="@+id/hr_text"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_weight="1"
+            android:text="@string/heat_rate_txt"
+            android:textAlignment="center" />
+        <TextView
+            android:id="@+id/flx_text"
+            android:layout_gravity="center_horizontal|center_vertical"
+            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:text="@string/flex_sensors_txt"
+            android:textAlignment="center" />
+    </LinearLayout>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="@string/author"
+        android:textStyle="italic"
+        android:textAlignment="center"
+        />
+</RelativeLayout>

@@ -28,29 +28,27 @@
     </ListView>
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="40dp"
-        android:background="@color/colorBatt"
+        android:layout_height="wrap_content"
+        android:background="@color/colorBattery"
         android:orientation="horizontal"
         android:weightSum="2">
         <TextView
             android:id="@+id/textView"
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_gravity="left"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
             android:layout_weight="1"
-            android:minHeight="35dp"
-            android:paddingLeft="8dp"
-            android:text="Heart rate" />
+            android:padding="10dp"
+            android:text="@string/heat_rate_txt" />
 
         <TextView
             android:id="@+id/textView2"
             android:layout_width="wrap_content"
-            android:layout_height="fill_parent"
-            android:layout_gravity="right"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
             android:layout_weight="1"
-            android:minHeight="35dp"
-            android:paddingLeft="8dp"
-            android:text="-- Bpm"
+            android:padding="10dp"
+            android:text="@string/emptyBloodPressure"
             android:textAlignment="textEnd" />
     </LinearLayout>
     <android.support.v4.widget.Space
@@ -60,31 +58,32 @@
 
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="30dp"
-        android:background="@color/colorBatt"
+        android:layout_height="wrap_content"
+        android:background="@color/colorBattery"
         android:orientation="horizontal"
         android:weightSum="2">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
-            android:layout_gravity="left"
+            android:layout_gravity="start"
             android:layout_weight="1"
-            android:gravity="center_vertical|left"
-            android:paddingLeft="8dp"
-            android:text="Battery Level"
+            android:gravity="center_vertical|start"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/battery_level"
             android:textSize="18sp" />
 
         <TextView
-            android:id="@+id/batt_level"
+            android:id="@+id/battery_level"
             android:layout_width="wrap_content"
             android:layout_height="fill_parent"
-            android:layout_gravity="right"
+            android:layout_gravity="end"
             android:layout_weight="1"
-            android:gravity="center_vertical|right"
-            android:paddingRight="8dp"
-            android:text=""
-            android:textSize="18sp"
-            tools:text="--" />
+            android:gravity="center_vertical|end"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/empty"
+            android:textSize="18sp" />
     </LinearLayout>
 </LinearLayout>
